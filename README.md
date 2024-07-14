@@ -1,86 +1,50 @@
-# AmbaBot
+# Embassy Appointment Checker
 
-AmbaBot is a Python script designed to automate checking for available slots
-at the russian ambassy in Paris.
+This script automates the process of checking for available appointment slots at a Russian embassy (kdmid.ru). It performs the following tasks:
 
-## Functionality
-
-The main function of AmbaBot is to handle requests identified by the `AMBASSY_REQUEST_NUMBER`. 
-
-The bot will:
- - Connect to https://paris.kdmid.ru with your `AMBASSY_REQUEST_NUMBER` and `AMBASSY_PROTECTION_CODE`
- - solve the captcha using aws textract
- - extract the current status of your request
- - if there are free slots, send an email to `EMAIL_TO`
-
-This project contains a Python AWS Lambda function and Terraform configuration for deploying it.
+1. Sends an HTTP request to the embassy website (kdmid.ru) to retrieve a form.
+2. Extracts captcha image from the retrieved form.
+3. Solves the captcha using Optical Character Recognition (OCR).
+4. Submits the form with the solved captcha.
+5. Extracts the appointment availability message from the response.
 
 ## Prerequisites
 
-- AWS account
-- Python 3.10
-- Pipenv
-- Terraform
+- Python 3.6 or higher
+- The following Python packages:
+  - `easyocr`
+  - `pillow`
+  - `beautifulsoup4`
+  - `python-dotenv`
 
-## Local Development
+## Installation
 
-1. Install the Python dependencies:
+1. Clone this repository or download the script files.
+2. Navigate to the project directory.
+3. Install the required Python packages using `pip`:
+    ```sh
+    pip install easyocr pillow beautifulsoup4 python-dotenv
+    ```
 
-```bash
-pipenv install
-```
+## Setup
 
-2. Run the Python script locally:
+1. Create a `.env` file in the root directory of your project with the following content:
+    ```env
+    # Номер заявки
+    AMBASSY_REQUEST_NUMBER=your_request_number
+    # Защитный код
+    AMBASSY_PROTECTION_CODE=your_protection_code
+    RETRY_COUNT=10
+    AMBASSY_CITY=your_city
+    ```
 
-```bash
-pipenv run ambabot
-```
+2. Ensure you have the appropriate permissions to access the embassy's website.
 
-## Deployment
+Make sure to create 'первечная запись' to get Защитный код and Номер заявки
 
-1. Build the Lambda deployment package:
+## Usage
 
-```bash
-./build.sh
-```
+Run the script with the following command:
+```sh
+python ambabot_lite.py
 
-2. Initialize Terraform:
-
-```bash
-terraform init
-```
-
-3. Apply the Terraform configuration:
-
-```bash
-terraform apply
-```
-
-## Environment Variables
-
-Create a `.env` file in the project root with the following variables:
-
-```env
-AWS_REGION=your_aws_region
-AWS_PROFILE=your_aws_profile
-
-#  Номер заявки
-AMBASSY_REQUEST_NUMBER=999999
-
-#  Защитный код 
-AMBASSY_PROTECTION_CODE=XXXXXXXX
-
-LOG_LEVEL=DEBUG
-EMAIL_TO=contact@ophir.dev
-EMAIL_FROM=contact@ophir.dev
-```
-
-## Logs
-
-The logs are available in CloudWatch, in the log group `/aws/lambda/ambabot`.
-To view the logs, run the following command:
-
-```bash
-aws logs get-log-events --log-group-name /aws/lambda/ambabot --log-stream-name $(aws logs describe-log-streams --log-group-name /aws/lambda/ambabot --limit 1 --query 'logStreams[0].logStreamName' --output text)
-```
-    
